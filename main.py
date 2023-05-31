@@ -22,7 +22,8 @@ spark = SparkSession.builder.appName("FunniestMovie") \
 
 # EX 1 A
 ################################################################################
-#
+
+# read csv files as data frame
 df_rec = spark.read.csv(r'C:\Users\ofir\Downloads\drive-download-20230531T104531Z-001\recommendations.csv',
                         header=True, inferSchema=True)
 
@@ -55,20 +56,28 @@ top_10_rec_with_game_name_df.write.mode('overwrite').parquet(
 df_users = spark.read.csv(r'C:\Users\ofir\Downloads\drive-download-20230531T104531Z-001\users.csv',
                           header=True, inferSchema=True)
 
+# group by user_id and sum all reviews accordingly
 top_reviews_df = df_users.groupBy('user_id').agg(sum('reviews').alias("reviews_num"))
-# top_reviews_df = df_users.groupBy('user_id').sum('reviews').alias('sum_reviews')
 
-order_reviews = top_reviews_df.orderBy(desc('reviews_num'))
+# get the top 50 users with most reviews
+order_reviews = top_reviews_df.orderBy(desc('reviews_num')).limit(50)
 
-top_50_reviews = order_reviews.limit(5)
-top_50_reviews.show()
+order_reviews.show(10)
 
-top_50_reviews_with_helpful_df = top_50_reviews.join(df_rec, ["user_id"], "inner").select(
+# join with recommendation dataframe to get the helpful number per user.
+# after that group by again and sum all helpful in addition
+# then, order again by reviews_num column
+top_50_reviews_with_helpful_df = order_reviews.join(df_rec, ["user_id"], "inner").select(
     df_rec["user_id"].alias("user_id"),
-    top_50_reviews["reviews_num"].alias("reviews_num"),
+    order_reviews["reviews_num"].alias("reviews_num"),
     df_rec["helpful"].alias("helpful")) \
-    .groupBy("user_id", "reviews_num").agg(sum("helpful").alias("helpful_num"))
+    .groupBy("user_id", "reviews_num").agg(sum("helpful").alias("helpful_num")) \
+    .orderBy(desc("reviews_num"))
 
 top_50_reviews_with_helpful_df.show(10)
+
+# serialized to parquet file
+top_50_reviews_with_helpful_df.write.mode('overwrite').parquet(
+    r'C:\Users\ofir\Downloads\drive-download-20230531T104531Z-001\outputs\top_reviews.parquet')
 
 input()
