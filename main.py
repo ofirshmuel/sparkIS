@@ -3,7 +3,7 @@ import sys
 import os
 
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import count, desc, sequence,sum
+from pyspark.sql.functions import count, desc, sequence, sum
 
 # simple check only for test
 
@@ -23,8 +23,8 @@ spark = SparkSession.builder.appName("FunniestMovie") \
 # EX 1 A
 ################################################################################
 #
-# df_rec = spark.read.csv(r'C:\Users\ofir\Downloads\drive-download-20230531T104531Z-001\recommendations.csv',
-#                         header=True, inferSchema=True)
+df_rec = spark.read.csv(r'C:\Users\ofir\Downloads\drive-download-20230531T104531Z-001\recommendations.csv',
+                        header=True, inferSchema=True)
 #
 # df_games = spark.read.csv(r'C:\Users\ofir\Downloads\drive-download-20230531T104531Z-001\games.csv',
 #                           header=True, inferSchema=True)
@@ -60,8 +60,15 @@ top_reviews_df = df_users.groupBy('user_id').agg(sum('reviews').alias("reviews_n
 
 order_reviews = top_reviews_df.orderBy(desc('reviews_num'))
 
-top_50_reviews = order_reviews.limit(10)
-
+top_50_reviews = order_reviews.limit(5)
 top_50_reviews.show()
+
+top_50_reviews_with_helpful_df = top_50_reviews.join(df_rec, ["user_id"], "inner").select(
+    df_rec["user_id"].alias("user_id"),
+    top_50_reviews["reviews_num"].alias("reviews_num"),
+    df_rec["helpful"].alias("helpful")) \
+    .groupBy("user_id", "reviews_num").agg(sum("helpful").alias("helpful_num"))
+
+top_50_reviews_with_helpful_df.show(10)
 
 input()
