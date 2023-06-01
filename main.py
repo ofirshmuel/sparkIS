@@ -40,13 +40,13 @@ top_10_rec_df = top_funniest_rec_df.limit(10)
 # join with games dataset and alias every "column"
 top_10_rec_with_game_name_df = top_10_rec_df.join(df_games, ["app_id"], "inner").select(
     df_games["title"].alias("game_name"), top_10_rec_df["user_id"].alias("user_id"),
-    top_10_rec_df["funny"].alias("num_funny"), top_10_rec_df["hours"].alias("hours_played"))
+    top_10_rec_df["funny"].alias("num_funny"), top_10_rec_df["hours"].alias("hours_played")).orderBy(desc("num_funny"))
 
 top_10_rec_with_game_name_df.show()
 
 # serialized to parquet file
 top_10_rec_with_game_name_df.write.mode('overwrite').parquet(
-    r'C:\Users\ofir\Downloads\drive-download-20230531T104531Z-001\outputs\funniest_recommendation.parquet')
+    r'C:\Users\ofir\Downloads\drive-download-20230531T104531Z-001\outputs\funniest_recommendation')
 
 ################################################################################
 
@@ -78,6 +78,6 @@ top_50_reviews_with_helpful_df.show(10)
 
 # serialized to parquet file
 top_50_reviews_with_helpful_df.write.mode('overwrite').parquet(
-    r'C:\Users\ofir\Downloads\drive-download-20230531T104531Z-001\outputs\top_reviews.parquet')
+    r'C:\Users\ofir\Downloads\drive-download-20230531T104531Z-001\outputs\top_reviews')
 
 input()

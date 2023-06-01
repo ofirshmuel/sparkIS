@@ -1,0 +1,3 @@
+druid.sh
+druid_ingest_*
+druid_queries.sql
